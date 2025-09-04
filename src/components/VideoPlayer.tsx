@@ -1,0 +1,124 @@
+import { useRef, useEffect, useState } from "react";
+import { Video } from "@/types/video";
+import { Heart, MessageCircle, Share2, Music, CheckCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+interface VideoPlayerProps {
+  video: Video;
+  isActive: boolean;
+  onLike: (id: string) => void;
+}
+
+export const VideoPlayer = ({ video, isActive, onLike }: VideoPlayerProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [showHeart, setShowHeart] = useState(false);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      if (isActive) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  }, [isActive]);
+
+  const handleLike = () => {
+    onLike(video.id);
+    setShowHeart(true);
+    setTimeout(() => setShowHeart(false), 1000);
+  };
+
+  const handleDoubleClick = () => {
+    if (!video.isLiked) {
+      handleLike();
+    }
+  };
+
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return num.toString();
+  };
+
+  return (
+    <div className="relative h-full w-full bg-black snap-start snap-always">
+      {/* Video */}
+      <video
+        ref={videoRef}
+        src={video.url}
+        className="h-full w-full object-cover"
+        loop
+        muted
+        playsInline
+        onDoubleClick={handleDoubleClick}
+      />
+
+      {/* Gradient Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 pointer-events-none" />
+
+      {/* Heart Animation */}
+      {showHeart && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <Heart className="w-32 h-32 text-primary fill-primary heart-animation" />
+        </div>
+      )}
+
+      {/* Video Info */}
+      <div className="absolute bottom-20 left-4 right-20 text-foreground">
+        <div className="flex items-center gap-3 mb-3">
+          <img
+            src={video.user.avatar}
+            alt={video.user.username}
+            className="w-10 h-10 rounded-full border-2 border-primary"
+          />
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{video.user.username}</span>
+            {video.user.verified && (
+              <CheckCircle className="w-4 h-4 text-primary fill-primary" />
+            )}
+          </div>
+        </div>
+        <p className="text-sm mb-2">{video.description}</p>
+        <div className="flex items-center gap-2">
+          <Music className="w-4 h-4" />
+          <span className="text-xs">Original Sound</span>
+        </div>
+      </div>
+
+      {/* Actions Sidebar */}
+      <div className="absolute right-4 bottom-20 flex flex-col items-center gap-5">
+        <button
+          onClick={handleLike}
+          className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
+        >
+          <div className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center",
+            "bg-white/10 backdrop-blur-md",
+            video.isLiked && "bg-primary/20"
+          )}>
+            <Heart className={cn(
+              "w-6 h-6",
+              video.isLiked ? "text-primary fill-primary" : "text-white"
+            )} />
+          </div>
+          <span className="text-xs text-white">{formatNumber(video.likes)}</span>
+        </button>
+
+        <button className="flex flex-col items-center gap-1 transition-transform hover:scale-110">
+          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+            <MessageCircle className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-xs text-white">{formatNumber(video.comments)}</span>
+        </button>
+
+        <button className="flex flex-col items-center gap-1 transition-transform hover:scale-110">
+          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+            <Share2 className="w-6 h-6 text-white" />
+          </div>
+          <span className="text-xs text-white">{formatNumber(video.shares)}</span>
+        </button>
+      </div>
+    </div>
+  );
+};

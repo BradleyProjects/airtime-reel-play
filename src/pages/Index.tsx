@@ -1,12 +1,75 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useRef, useEffect } from "react";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { AirtimePayment } from "@/components/AirtimePayment";
+import { Header } from "@/components/Header";
+import { mockVideos } from "@/data/mockVideos";
+import { Video } from "@/types/video";
 
 const Index = () => {
+  const [videos, setVideos] = useState<Video[]>(mockVideos);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showPayment, setShowPayment] = useState(false);
+  const [credits, setCredits] = useState(100);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const handleLike = (videoId: string) => {
+    setVideos((prev) =>
+      prev.map((video) =>
+        video.id === videoId
+          ? { ...video, isLiked: !video.isLiked, likes: video.isLiked ? video.likes - 1 : video.likes + 1 }
+          : video
+      )
+    );
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!containerRef.current) return;
+      
+      const scrollPosition = containerRef.current.scrollTop;
+      const videoHeight = window.innerHeight;
+      const newIndex = Math.round(scrollPosition / videoHeight);
+      
+      if (newIndex !== currentIndex) {
+        setCurrentIndex(newIndex);
+      }
+    };
+
+    const container = containerRef.current;
+    container?.addEventListener("scroll", handleScroll);
+    
+    return () => {
+      container?.removeEventListener("scroll", handleScroll);
+    };
+  }, [currentIndex]);
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="h-screen bg-background overflow-hidden relative">
+      {/* Header */}
+      <Header onOpenPayment={() => setShowPayment(true)} credits={credits} />
+
+      {/* Video Feed */}
+      <div
+        ref={containerRef}
+        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        style={{ scrollSnapType: "y mandatory" }}
+      >
+        {videos.map((video, index) => (
+          <div key={video.id} className="h-screen snap-start snap-always">
+            <VideoPlayer
+              video={video}
+              isActive={index === currentIndex}
+              onLike={handleLike}
+            />
+          </div>
+        ))}
       </div>
+
+      {/* Airtime Payment Modal */}
+      <AirtimePayment
+        open={showPayment}
+        onClose={() => setShowPayment(false)}
+      />
     </div>
   );
 };
