@@ -1,4 +1,4 @@
-import { Search, Tv, Coins } from "lucide-react";
+import { Tv, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface HeaderProps {
@@ -20,22 +20,16 @@ export const Header = ({ onOpenPayment, credits }: HeaderProps) => {
           </span>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="text-foreground/70 hover:text-foreground">
-            <Search className="w-5 h-5" />
-          </Button>
-          
-          <Button
-            onClick={onOpenPayment}
-            variant="outline"
-            size="sm"
-            className="border-primary/50 hover:bg-primary/10 flex items-center gap-2"
-          >
-            <Coins className="w-4 h-4 text-primary" />
-            <span className="font-semibold">{credits}</span>
-          </Button>
-        </div>
+        {/* Credits Button */}
+        <Button
+          onClick={onOpenPayment}
+          variant="outline"
+          size="sm"
+          className="border-primary/50 hover:bg-primary/10 flex items-center gap-2"
+        >
+          <Coins className="w-4 h-4 text-primary" />
+          <span className="font-semibold">{credits}</span>
+        </Button>
       </div>
     </header>
   );

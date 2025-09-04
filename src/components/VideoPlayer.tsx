@@ -2,14 +2,16 @@ import { useRef, useEffect, useState } from "react";
 import { Video } from "@/types/video";
 import { Heart, MessageCircle, Share2, Music, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface VideoPlayerProps {
   video: Video;
   isActive: boolean;
   onLike: (id: string) => void;
+  onComment: (video: Video) => void;
 }
 
-export const VideoPlayer = ({ video, isActive, onLike }: VideoPlayerProps) => {
+export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showHeart, setShowHeart] = useState(false);
 
@@ -33,6 +35,30 @@ export const VideoPlayer = ({ video, isActive, onLike }: VideoPlayerProps) => {
     if (!video.isLiked) {
       handleLike();
     }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/?video=${video.id}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Check out @${video.user.username}'s video`,
+          text: video.description,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled share or browser doesn't support
+        copyToClipboard(shareUrl);
+      }
+    } else {
+      copyToClipboard(shareUrl);
+    }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success("Link copied to clipboard!");
   };
 
   const formatNumber = (num: number) => {
@@ -105,14 +131,20 @@ export const VideoPlayer = ({ video, isActive, onLike }: VideoPlayerProps) => {
           <span className="text-xs text-white">{formatNumber(video.likes)}</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 transition-transform hover:scale-110">
+        <button 
+          onClick={() => onComment(video)}
+          className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
+        >
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
             <MessageCircle className="w-6 h-6 text-white" />
           </div>
           <span className="text-xs text-white">{formatNumber(video.comments)}</span>
         </button>
 
-        <button className="flex flex-col items-center gap-1 transition-transform hover:scale-110">
+        <button 
+          onClick={handleShare}
+          className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
+        >
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
             <Share2 className="w-6 h-6 text-white" />
           </div>

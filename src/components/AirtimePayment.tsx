@@ -11,6 +11,7 @@ import { toast } from "sonner";
 interface AirtimePaymentProps {
   open: boolean;
   onClose: () => void;
+  onSuccess?: (credits: number) => void;
 }
 
 const packages: AirtimePackage[] = [
@@ -20,7 +21,7 @@ const packages: AirtimePackage[] = [
   { id: "4", amount: 5000, price: 49.99, currency: "USD" },
 ];
 
-export const AirtimePayment = ({ open, onClose }: AirtimePaymentProps) => {
+export const AirtimePayment = ({ open, onClose, onSuccess }: AirtimePaymentProps) => {
   const [selectedPackage, setSelectedPackage] = useState<AirtimePackage | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
@@ -39,6 +40,11 @@ export const AirtimePayment = ({ open, onClose }: AirtimePaymentProps) => {
     
     setIsProcessing(false);
     setPaymentSuccess(true);
+    
+    // Update credits in parent component
+    if (onSuccess) {
+      onSuccess(selectedPackage.amount);
+    }
     
     toast.success(`Successfully purchased ${selectedPackage.amount} credits!`);
     

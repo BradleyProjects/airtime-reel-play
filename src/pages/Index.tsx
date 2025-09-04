@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { AirtimePayment } from "@/components/AirtimePayment";
+import { CommentsModal } from "@/components/CommentsModal";
 import { Header } from "@/components/Header";
 import { mockVideos } from "@/data/mockVideos";
 import { Video } from "@/types/video";
@@ -9,6 +10,8 @@ const Index = () => {
   const [videos, setVideos] = useState<Video[]>(mockVideos);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showPayment, setShowPayment] = useState(false);
+  const [showComments, setShowComments] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<Video | null>(null);
   const [credits, setCredits] = useState(100);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -20,6 +23,15 @@ const Index = () => {
           : video
       )
     );
+  };
+
+  const handleComment = (video: Video) => {
+    setSelectedVideo(video);
+    setShowComments(true);
+  };
+
+  const handlePaymentSuccess = (purchasedCredits: number) => {
+    setCredits(prev => prev + purchasedCredits);
   };
 
   useEffect(() => {
@@ -60,6 +72,7 @@ const Index = () => {
               video={video}
               isActive={index === currentIndex}
               onLike={handleLike}
+              onComment={handleComment}
             />
           </div>
         ))}
@@ -69,7 +82,20 @@ const Index = () => {
       <AirtimePayment
         open={showPayment}
         onClose={() => setShowPayment(false)}
+        onSuccess={handlePaymentSuccess}
       />
+
+      {/* Comments Modal */}
+      {selectedVideo && (
+        <CommentsModal
+          open={showComments}
+          onClose={() => setShowComments(false)}
+          videoId={selectedVideo.id}
+          videoDescription={selectedVideo.description}
+          username={selectedVideo.user.username}
+          avatar={selectedVideo.user.avatar}
+        />
+      )}
     </div>
   );
 };
