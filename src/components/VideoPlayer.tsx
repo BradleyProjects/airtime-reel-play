@@ -1,6 +1,17 @@
 import { useRef, useEffect, useState } from "react";
 import { Video } from "@/types/video";
-import { Heart, MessageCircle, Share2, Music, CheckCircle, Play, Pause, Volume2, VolumeX, Zap } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  Music,
+  CheckCircle,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
+  Zap,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -11,7 +22,12 @@ interface VideoPlayerProps {
   onComment: (video: Video) => void;
 }
 
-export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerProps) => {
+export const VideoPlayer = ({
+  video,
+  isActive,
+  onLike,
+  onComment,
+}: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const [showHeart, setShowHeart] = useState(false);
@@ -22,20 +38,27 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
   const [isDragging, setIsDragging] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
 
+  // ...existing code...
+
   useEffect(() => {
     if (videoRef.current) {
       if (isActive) {
-        videoRef.current.play().then(() => {
-          setIsPlaying(true);
-        }).catch(error => {
-          console.log("Autoplay was prevented:", error);
-        });
+        videoRef.current
+          .play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.log("Autoplay was prevented:", error);
+          });
       } else {
         videoRef.current.pause();
         setIsPlaying(false);
       }
     }
   }, [isActive]);
+
+  // ...existing code...
 
   useEffect(() => {
     const video = videoRef.current;
@@ -50,12 +73,12 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
       setDuration(video.duration);
     };
 
-    video.addEventListener('timeupdate', updateTime);
-    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener("timeupdate", updateTime);
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
 
     return () => {
-      video.removeEventListener('timeupdate', updateTime);
-      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener("timeupdate", updateTime);
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [video]);
 
@@ -71,49 +94,52 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
     }
   };
 
-  const toggleMute = () => {
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
-
-  const toggleSpeed = () => {
-    if (videoRef.current) {
-      const newRate = playbackRate === 1 ? 2 : 1;
-      videoRef.current.playbackRate = newRate;
-      setPlaybackRate(newRate);
-      toast.success(`Playback speed: ${newRate}x`);
-    }
-  };
-
-  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = progressRef.current?.getBoundingClientRect();
-    if (!rect || !videoRef.current) return;
-    
-    const x = e.clientX - rect.left;
-    const percentage = x / rect.width;
-    const newTime = percentage * duration;
-    
-    videoRef.current.currentTime = newTime;
-    setCurrentTime(newTime);
-  };
-
-  const handleProgressDrag = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return;
-    handleProgressClick(e);
-  };
-
-  const formatTime = (time: number) => {
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-  };
-
+  // Missing handler stubs
   const handleLike = () => {
     onLike(video.id);
     setShowHeart(true);
     setTimeout(() => setShowHeart(false), 1000);
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!progressRef.current || !videoRef.current || !duration) return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    videoRef.current.currentTime = percent * duration;
+    setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const handleProgressDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !progressRef.current || !videoRef.current || !duration)
+      return;
+    const rect = progressRef.current.getBoundingClientRect();
+    const percent = (e.clientX - rect.left) / rect.width;
+    videoRef.current.currentTime = percent * duration;
+    setCurrentTime(videoRef.current.currentTime);
+  };
+
+  const toggleMute = () => {
+    setIsMuted((prev) => !prev);
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+    }
+  };
+
+  const toggleSpeed = () => {
+    const newRate = playbackRate === 1 ? 2 : 1;
+    setPlaybackRate(newRate);
+    if (videoRef.current) {
+      videoRef.current.playbackRate = newRate;
+    }
+  };
+
+  const formatTime = (time: number) => {
+    if (!time || isNaN(time)) return "0:00";
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${minutes}:${seconds}`;
   };
 
   const handleDoubleClick = () => {
@@ -124,7 +150,7 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
 
   const handleShare = async () => {
     const shareUrl = `${window.location.origin}/?video=${video.id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -182,7 +208,7 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
       <div className="absolute bottom-0 left-0 right-0 px-4 pb-2">
         <div className="flex items-center gap-2 text-white text-xs">
           <span>{formatTime(currentTime)}</span>
-          <div 
+          <div
             ref={progressRef}
             className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative"
             onClick={handleProgressClick}
@@ -191,13 +217,16 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
             onMouseLeave={() => setIsDragging(false)}
             onMouseMove={handleProgressDrag}
           >
-            <div 
+            <div
               className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all"
               style={{ width: `${(currentTime / duration) * 100}%` }}
             />
-            <div 
+            <div
               className="absolute h-3 w-3 bg-primary rounded-full -translate-y-1/2 top-1/2 transition-all"
-              style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translateX(-50%) translateY(-50%)' }}
+              style={{
+                left: `${(currentTime / duration) * 100}%`,
+                transform: "translateX(-50%) translateY(-50%)",
+              }}
             />
           </div>
           <span>{formatTime(duration)}</span>
@@ -239,40 +268,50 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
           onClick={handleLike}
           className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
         >
-          <div className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center",
-            "bg-white/10 backdrop-blur-md",
-            video.isLiked && "bg-primary/20"
-          )}>
-            <Heart className={cn(
-              "w-6 h-6",
-              video.isLiked ? "text-primary fill-primary" : "text-white"
-            )} />
+          <div
+            className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center",
+              "bg-white/10 backdrop-blur-md",
+              video.isLiked && "bg-primary/20"
+            )}
+          >
+            <Heart
+              className={cn(
+                "w-6 h-6",
+                video.isLiked ? "text-primary fill-primary" : "text-white"
+              )}
+            />
           </div>
-          <span className="text-xs text-white">{formatNumber(video.likes)}</span>
+          <span className="text-xs text-white">
+            {formatNumber(video.likes)}
+          </span>
         </button>
 
-        <button 
+        <button
           onClick={() => onComment(video)}
           className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
         >
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
             <MessageCircle className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xs text-white">{formatNumber(video.comments)}</span>
+          <span className="text-xs text-white">
+            {formatNumber(video.comments)}
+          </span>
         </button>
 
-        <button 
+        <button
           onClick={handleShare}
           className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
         >
           <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
             <Share2 className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xs text-white">{formatNumber(video.shares)}</span>
+          <span className="text-xs text-white">
+            {formatNumber(video.shares)}
+          </span>
         </button>
 
-        <button 
+        <button
           onClick={toggleMute}
           className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
         >
@@ -283,22 +322,28 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
               <Volume2 className="w-6 h-6 text-white" />
             )}
           </div>
-          <span className="text-xs text-white">{isMuted ? "Unmute" : "Mute"}</span>
+          <span className="text-xs text-white">
+            {isMuted ? "Unmute" : "Mute"}
+          </span>
         </button>
 
-        <button 
+        <button
           onClick={toggleSpeed}
           className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
         >
-          <div className={cn(
-            "w-12 h-12 rounded-full flex items-center justify-center",
-            "bg-white/10 backdrop-blur-md",
-            playbackRate === 2 && "bg-primary/20"
-          )}>
-            <Zap className={cn(
-              "w-6 h-6",
-              playbackRate === 2 ? "text-primary fill-primary" : "text-white"
-            )} />
+          <div
+            className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center",
+              "bg-white/10 backdrop-blur-md",
+              playbackRate === 2 && "bg-primary/20"
+            )}
+          >
+            <Zap
+              className={cn(
+                "w-6 h-6",
+                playbackRate === 2 ? "text-primary fill-primary" : "text-white"
+              )}
+            />
           </div>
           <span className="text-xs text-white">{playbackRate}x</span>
         </button>

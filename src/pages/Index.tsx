@@ -19,7 +19,11 @@ const Index = () => {
     setVideos((prev) =>
       prev.map((video) =>
         video.id === videoId
-          ? { ...video, isLiked: !video.isLiked, likes: video.isLiked ? video.likes - 1 : video.likes + 1 }
+          ? {
+              ...video,
+              isLiked: !video.isLiked,
+              likes: video.isLiked ? video.likes - 1 : video.likes + 1,
+            }
           : video
       )
     );
@@ -31,17 +35,17 @@ const Index = () => {
   };
 
   const handlePaymentSuccess = (purchasedCredits: number) => {
-    setCredits(prev => prev + purchasedCredits);
+    setCredits((prev) => prev + purchasedCredits);
   };
 
   useEffect(() => {
     const handleScroll = () => {
       if (!containerRef.current) return;
-      
+
       const scrollPosition = containerRef.current.scrollTop;
       const videoHeight = window.innerHeight;
       const newIndex = Math.round(scrollPosition / videoHeight);
-      
+
       if (newIndex !== currentIndex) {
         setCurrentIndex(newIndex);
       }
@@ -49,21 +53,21 @@ const Index = () => {
 
     const container = containerRef.current;
     container?.addEventListener("scroll", handleScroll);
-    
+
     return () => {
       container?.removeEventListener("scroll", handleScroll);
     };
   }, [currentIndex]);
 
   return (
-    <div className="h-screen bg-background overflow-hidden relative">
+    <div className="h-screen bg-background overflow-hidden relative flex flex-col">
       {/* Header */}
       <Header onOpenPayment={() => setShowPayment(true)} credits={credits} />
 
       {/* Video Feed */}
       <div
         ref={containerRef}
-        className="h-full overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
+        className="flex-1 overflow-y-scroll snap-y snap-mandatory scrollbar-hide"
         style={{ scrollSnapType: "y mandatory" }}
       >
         {videos.map((video, index) => (
