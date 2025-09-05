@@ -18,18 +18,18 @@ All colors MUST be HSL.
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    /* Vibrant pink/purple gradient */
-    --primary: 330 100% 50%;
+    /* Vibrant orange primary */
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 330 100% 70%;
+    --primary-glow: 25 100% 65%;
 
-    --secondary: 270 50% 40%;
+    --secondary: 142 71% 45%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 280 100% 60%;
+    --accent: 142 71% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 50%;
@@ -37,7 +37,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 330 100% 50%;
+    --ring: 25 95% 53%;
 
     --radius: 1rem;
 
@@ -46,12 +46,12 @@ All colors MUST be HSL.
     --glass-opacity: 0.08;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(330 100% 50%), hsl(270 100% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(280 100% 60%), hsl(330 100% 70%));
+    --gradient-primary: linear-gradient(135deg, hsl(25 95% 53%), hsl(142 71% 45%));
+    --gradient-accent: linear-gradient(135deg, hsl(142 71% 45%), hsl(25 100% 65%));
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 3%), hsl(0 0% 0%));
     
     /* Shadows */
-    --shadow-glow: 0 0 40px hsl(330 100% 50% / 0.3);
+    --shadow-glow: 0 0 40px hsl(25 95% 53% / 0.3);
     --shadow-soft: 0 10px 40px hsl(0 0% 0% / 0.5);
     
     /* Transitions */
@@ -70,16 +70,16 @@ All colors MUST be HSL.
     --popover: 0 0% 7%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 330 100% 50%;
+    --primary: 25 95% 53%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 270 50% 40%;
+    --secondary: 142 71% 45%;
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 280 100% 60%;
+    --accent: 142 71% 45%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 50%;
@@ -87,7 +87,7 @@ All colors MUST be HSL.
 
     --border: 0 0% 18%;
     --input: 0 0% 18%;
-    --ring: 330 100% 50%;
+    --ring: 25 95% 53%;
   }
 }
 
