@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Video } from "@/types/video";
-import { Heart, MessageCircle, Share2, Music, CheckCircle } from "lucide-react";
+import { Heart, MessageCircle, Share2, Music, CheckCircle, Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -14,16 +14,42 @@ interface VideoPlayerProps {
 export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [showHeart, setShowHeart] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
 
   useEffect(() => {
     if (videoRef.current) {
       if (isActive) {
-        videoRef.current.play();
+        videoRef.current.play().then(() => {
+          setIsPlaying(true);
+        }).catch(error => {
+          console.log("Autoplay was prevented:", error);
+        });
       } else {
         videoRef.current.pause();
+        setIsPlaying(false);
       }
     }
   }, [isActive]);
+
+  const togglePlayPause = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        videoRef.current.play();
+        setIsPlaying(true);
+      }
+    }
+  };
+
+  const toggleMute = () => {
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
 
   const handleLike = () => {
     onLike(video.id);
@@ -73,12 +99,22 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
       <video
         ref={videoRef}
         src={video.url}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover cursor-pointer"
         loop
-        muted
+        muted={isMuted}
         playsInline
+        onClick={togglePlayPause}
         onDoubleClick={handleDoubleClick}
       />
+
+      {/* Play/Pause Overlay */}
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+            <Play className="w-10 h-10 text-white fill-white ml-1" />
+          </div>
+        </div>
+      )}
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 pointer-events-none" />
@@ -149,6 +185,20 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
             <Share2 className="w-6 h-6 text-white" />
           </div>
           <span className="text-xs text-white">{formatNumber(video.shares)}</span>
+        </button>
+
+        <button 
+          onClick={toggleMute}
+          className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
+        >
+          <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center">
+            {isMuted ? (
+              <VolumeX className="w-6 h-6 text-white" />
+            ) : (
+              <Volume2 className="w-6 h-6 text-white" />
+            )}
+          </div>
+          <span className="text-xs text-white">{isMuted ? "Unmute" : "Mute"}</span>
         </button>
       </div>
     </div>
