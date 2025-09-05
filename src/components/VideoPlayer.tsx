@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState } from "react";
 import { Video } from "@/types/video";
-import { Heart, MessageCircle, Share2, Music, CheckCircle, Play, Pause, Volume2, VolumeX } from "lucide-react";
+import { Heart, MessageCircle, Share2, Music, CheckCircle, Play, Pause, Volume2, VolumeX, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -13,9 +13,14 @@ interface VideoPlayerProps {
 
 export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
   const [showHeart, setShowHeart] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
 
   useEffect(() => {
     if (videoRef.current) {
@@ -31,6 +36,28 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
       }
     }
   }, [isActive]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const updateTime = () => {
+      setCurrentTime(video.currentTime);
+      setDuration(video.duration);
+    };
+
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+    };
+
+    video.addEventListener('timeupdate', updateTime);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+    return () => {
+      video.removeEventListener('timeupdate', updateTime);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, [video]);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -49,6 +76,38 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
       videoRef.current.muted = !isMuted;
       setIsMuted(!isMuted);
     }
+  };
+
+  const toggleSpeed = () => {
+    if (videoRef.current) {
+      const newRate = playbackRate === 1 ? 2 : 1;
+      videoRef.current.playbackRate = newRate;
+      setPlaybackRate(newRate);
+      toast.success(`Playback speed: ${newRate}x`);
+    }
+  };
+
+  const handleProgressClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = progressRef.current?.getBoundingClientRect();
+    if (!rect || !videoRef.current) return;
+    
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    const newTime = percentage * duration;
+    
+    videoRef.current.currentTime = newTime;
+    setCurrentTime(newTime);
+  };
+
+  const handleProgressDrag = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging) return;
+    handleProgressClick(e);
+  };
+
+  const formatTime = (time: number) => {
+    const minutes = Math.floor(time / 60);
+    const seconds = Math.floor(time % 60);
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   const handleLike = () => {
@@ -118,6 +177,32 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
 
       {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/50 pointer-events-none" />
+
+      {/* Progress Bar */}
+      <div className="absolute bottom-0 left-0 right-0 px-4 pb-2">
+        <div className="flex items-center gap-2 text-white text-xs">
+          <span>{formatTime(currentTime)}</span>
+          <div 
+            ref={progressRef}
+            className="flex-1 h-1 bg-white/20 rounded-full cursor-pointer relative"
+            onClick={handleProgressClick}
+            onMouseDown={() => setIsDragging(true)}
+            onMouseUp={() => setIsDragging(false)}
+            onMouseLeave={() => setIsDragging(false)}
+            onMouseMove={handleProgressDrag}
+          >
+            <div 
+              className="absolute left-0 top-0 h-full bg-primary rounded-full transition-all"
+              style={{ width: `${(currentTime / duration) * 100}%` }}
+            />
+            <div 
+              className="absolute h-3 w-3 bg-primary rounded-full -translate-y-1/2 top-1/2 transition-all"
+              style={{ left: `${(currentTime / duration) * 100}%`, transform: 'translateX(-50%) translateY(-50%)' }}
+            />
+          </div>
+          <span>{formatTime(duration)}</span>
+        </div>
+      </div>
 
       {/* Heart Animation */}
       {showHeart && (
@@ -199,6 +284,23 @@ export const VideoPlayer = ({ video, isActive, onLike, onComment }: VideoPlayerP
             )}
           </div>
           <span className="text-xs text-white">{isMuted ? "Unmute" : "Mute"}</span>
+        </button>
+
+        <button 
+          onClick={toggleSpeed}
+          className="flex flex-col items-center gap-1 transition-transform hover:scale-110"
+        >
+          <div className={cn(
+            "w-12 h-12 rounded-full flex items-center justify-center",
+            "bg-white/10 backdrop-blur-md",
+            playbackRate === 2 && "bg-primary/20"
+          )}>
+            <Zap className={cn(
+              "w-6 h-6",
+              playbackRate === 2 ? "text-primary fill-primary" : "text-white"
+            )} />
+          </div>
+          <span className="text-xs text-white">{playbackRate}x</span>
         </button>
       </div>
     </div>
