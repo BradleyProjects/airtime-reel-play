@@ -13,13 +13,13 @@ export const Header = ({ onOpenPayment, credits }: HeaderProps) => {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <img
-            src="https://github.com/BradleyProjects/airtime-reel-play/blob/main/swipr-logo.png"
+            src="src/components/swipr-logo.png"
             alt="Swipr Logo"
-            className="w-10 h-10 sm:w-12 sm:h-12 object-contain"
+            className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
           />
-          <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          {/* <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
             Swipr
-          </span>
+          </span> */}
         </div>
 
         {/* Credits Button */}
