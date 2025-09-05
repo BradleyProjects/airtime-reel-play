@@ -1,5 +1,6 @@
 import { Tv, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import swiprLogo from "./swipr-logo.png";
 
 interface HeaderProps {
   onOpenPayment: () => void;
@@ -13,7 +14,7 @@ export const Header = ({ onOpenPayment, credits }: HeaderProps) => {
         {/* Logo */}
         <div className="flex items-center gap-2">
           <img
-            src="src/components/swipr-logo.png"
+            src={swiprLogo}
             alt="Swipr Logo"
             className="w-16 h-16 sm:w-20 sm:h-20 object-contain"
           />
