@@ -96,23 +96,47 @@ export const VideoPlayer = ({
 
   // Handle active state changes
   useEffect(() => {
+    if (!videoRef.current) return;
+    
     if (isActive) {
+      // Reset playback position for a fresh start
+      videoRef.current.currentTime = 0;
       playVideo();
     } else {
-      if (videoRef.current) {
-        videoRef.current.pause();
-        setIsPlaying(false);
+      // Immediately stop playback and reset when inactive
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+      setCurrentTime(0);
+      
+      // Clear any pending retry timeouts
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
     }
   }, [isActive, playVideo]);
 
-  // Reset state when video changes
+  // Reset state when video changes or component unmounts
+  useEffect(() => {
+    // Clean up the current video when switching
+    const currentVideo = videoRef.current;
+    
+    return () => {
+      if (currentVideo) {
+        currentVideo.pause();
+        currentVideo.currentTime = 0;
+      }
+    };
+  }, [video.id]); // Reset when video ID changes
+  
+  // Load new video
   useEffect(() => {
     setCurrentTime(0);
     setDuration(0);
     setHasError(false);
     setRetryCount(0);
     setIsBuffering(false);
+    setIsPlaying(false);
     
     if (videoRef.current) {
       videoRef.current.load();
