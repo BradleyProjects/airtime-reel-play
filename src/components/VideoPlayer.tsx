@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { Video } from "@/types/video";
 import {
   Heart,
@@ -11,6 +11,7 @@ import {
   Volume2,
   VolumeX,
   Zap,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const [showHeart, setShowHeart] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
@@ -37,50 +39,177 @@ export const VideoPlayer = ({
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [isBuffering, setIsBuffering] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
 
-  // ...existing code...
+  // Handle video play with error recovery
+  const playVideo = useCallback(async () => {
+    if (!videoRef.current || hasError) return;
+    
+    try {
+      // Reset video if it's stuck
+      if (videoRef.current.readyState < 2) {
+        videoRef.current.load();
+      }
+      
+      await videoRef.current.play();
+      setIsPlaying(true);
+      setHasError(false);
+      setRetryCount(0);
+    } catch (error: any) {
+      console.error("Video play error:", error);
+      
+      // Handle different error types
+      if (error.name === 'NotAllowedError') {
+        // User interaction required, mute and retry
+        videoRef.current.muted = true;
+        setIsMuted(true);
+        try {
+          await videoRef.current.play();
+          setIsPlaying(true);
+        } catch (retryError) {
+          console.error("Retry with mute failed:", retryError);
+        }
+      } else if (error.name === 'AbortError') {
+        // Video loading was aborted, retry after delay
+        if (retryCount < 3) {
+          retryTimeoutRef.current = setTimeout(() => {
+            setRetryCount(prev => prev + 1);
+            playVideo();
+          }, 1000);
+        } else {
+          setHasError(true);
+        }
+      }
+    }
+  }, [hasError, retryCount]);
 
+  // Clean up on unmount
   useEffect(() => {
-    if (videoRef.current) {
-      if (isActive) {
-        videoRef.current
-          .play()
-          .then(() => {
-            setIsPlaying(true);
-          })
-          .catch((error) => {
-            console.log("Autoplay was prevented:", error);
-          });
-      } else {
+    return () => {
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Handle active state changes
+  useEffect(() => {
+    if (isActive) {
+      playVideo();
+    } else {
+      if (videoRef.current) {
         videoRef.current.pause();
         setIsPlaying(false);
       }
     }
-  }, [isActive]);
+  }, [isActive, playVideo]);
 
-  // ...existing code...
-
+  // Reset state when video changes
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    setCurrentTime(0);
+    setDuration(0);
+    setHasError(false);
+    setRetryCount(0);
+    setIsBuffering(false);
+    
+    if (videoRef.current) {
+      videoRef.current.load();
+    }
+  }, [video.url]);
 
-    const updateTime = () => {
-      setCurrentTime(video.currentTime);
-      setDuration(video.duration);
+  // Setup video event listeners
+  useEffect(() => {
+    const videoElement = videoRef.current;
+    if (!videoElement) return;
+
+    const handleTimeUpdate = () => {
+      if (!isDragging) {
+        setCurrentTime(videoElement.currentTime);
+      }
     };
 
     const handleLoadedMetadata = () => {
-      setDuration(video.duration);
+      setDuration(videoElement.duration);
+      setHasError(false);
     };
 
-    video.addEventListener("timeupdate", updateTime);
-    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+    const handleWaiting = () => {
+      setIsBuffering(true);
+    };
+
+    const handleCanPlay = () => {
+      setIsBuffering(false);
+      setHasError(false);
+    };
+
+    const handleError = (e: Event) => {
+      console.error("Video error:", e);
+      setHasError(true);
+      setIsBuffering(false);
+      
+      // Try to recover from error
+      if (retryCount < 3) {
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+          videoElement.load();
+          if (isActive) {
+            playVideo();
+          }
+        }, 2000);
+      }
+    };
+
+    const handleStalled = () => {
+      console.log("Video stalled, attempting recovery");
+      setIsBuffering(true);
+      // Force reload if stalled for too long
+      setTimeout(() => {
+        if (videoElement.readyState < 3) {
+          videoElement.load();
+        }
+      }, 3000);
+    };
+
+    const handleEnded = () => {
+      // Loop is set, but ensure it restarts properly
+      videoElement.currentTime = 0;
+      if (isActive) {
+        playVideo();
+      }
+    };
+
+    const handlePlay = () => {
+      setIsPlaying(true);
+    };
+
+    const handlePause = () => {
+      setIsPlaying(false);
+    };
+
+    videoElement.addEventListener("timeupdate", handleTimeUpdate);
+    videoElement.addEventListener("loadedmetadata", handleLoadedMetadata);
+    videoElement.addEventListener("waiting", handleWaiting);
+    videoElement.addEventListener("canplay", handleCanPlay);
+    videoElement.addEventListener("error", handleError);
+    videoElement.addEventListener("stalled", handleStalled);
+    videoElement.addEventListener("ended", handleEnded);
+    videoElement.addEventListener("play", handlePlay);
+    videoElement.addEventListener("pause", handlePause);
 
     return () => {
-      video.removeEventListener("timeupdate", updateTime);
-      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.removeEventListener("timeupdate", handleTimeUpdate);
+      videoElement.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      videoElement.removeEventListener("waiting", handleWaiting);
+      videoElement.removeEventListener("canplay", handleCanPlay);
+      videoElement.removeEventListener("error", handleError);
+      videoElement.removeEventListener("stalled", handleStalled);
+      videoElement.removeEventListener("ended", handleEnded);
+      videoElement.removeEventListener("play", handlePlay);
+      videoElement.removeEventListener("pause", handlePause);
     };
-  }, [video]);
+  }, [isDragging, isActive, playVideo, retryCount]);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -188,12 +317,40 @@ export const VideoPlayer = ({
         loop
         muted={isMuted}
         playsInline
+        preload="auto"
         onClick={togglePlayPause}
         onDoubleClick={handleDoubleClick}
       />
 
+      {/* Loading/Buffering Overlay */}
+      {isBuffering && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+          <Loader2 className="w-12 h-12 text-primary animate-spin" />
+        </div>
+      )}
+
+      {/* Error Overlay */}
+      {hasError && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/50">
+          <p className="text-white mb-4">Unable to load video</p>
+          <button
+            onClick={() => {
+              setHasError(false);
+              setRetryCount(0);
+              if (videoRef.current) {
+                videoRef.current.load();
+                playVideo();
+              }
+            }}
+            className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/80"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Play/Pause Overlay */}
-      {!isPlaying && (
+      {!isPlaying && !isBuffering && !hasError && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-20 h-20 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
             <Play className="w-10 h-10 text-white fill-white ml-1" />
