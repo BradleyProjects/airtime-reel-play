@@ -7,7 +7,7 @@ export const mockVideos: Video[] = [
     thumbnail: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=1200&fit=crop",
     user: {
       id: "user1",
-      username: "creativemind",
+      username: "swiprcreator",
       avatar: "https://i.pravatar.cc/150?img=1",
       verified: true
     },
