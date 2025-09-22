@@ -3,7 +3,7 @@ import { Video } from "@/types/video";
 export const mockVideos: Video[] = [
   {
     id: "1",
-    url: "https://www.youtube.com/embed/HcjX3uP2XFw?si=A4H2HuT1Vcra_Lrq",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     thumbnail: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=1200&fit=crop",
     user: {
       id: "user1",
@@ -11,17 +11,17 @@ export const mockVideos: Video[] = [
       avatar: "https://i.pravatar.cc/150?img=1",
       verified: true
     },
-    description: "Valorant: Intermediate Guide - Master the basics and improve your gameplay! #valorant #gaming #guide",
+    description: "Big Buck Bunny animation 🐰 Check out this amazing short film! #animation #bunny #cartoon",
     tags: ["animation", "bunny", "cartoon"],
     likes: 12543,
     comments: 234,
     shares: 89,
     isLiked: false,
-    duration: 15
+    duration: 596
   },
   {
     id: "2",
-    url: "https://www.youtube.com/embed/PIqsb18X6Oo?si=eSmk2npBhZu0MAs2",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
     thumbnail: "https://images.unsplash.com/photo-1509909756405-be0199881695?w=800&h=1200&fit=crop",
     user: {
       id: "user2",
@@ -29,17 +29,17 @@ export const mockVideos: Video[] = [
       avatar: "https://i.pravatar.cc/150?img=2",
       verified: false
     },
-    description: "Valorant: Advanced Guide - Pro tips and strategies! #valorant #gaming #advanced",
+    description: "Elephants Dream - Open source movie magic! 🐘 #animation #opensource #art",
     tags: ["animation", "opensource", "art"],
     likes: 45678,
     comments: 892,
     shares: 234,
     isLiked: true,
-    duration: 30
+    duration: 653
   },
   {
     id: "3",
-    url: "https://www.youtube.com/embed/Z1JjbyAKaAI?si=xLGWDb385f78m_zr",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     thumbnail: "https://images.unsplash.com/photo-1547032175-7fc8c7bd15b3?w=800&h=1200&fit=crop",
     user: {
       id: "user3",
@@ -47,17 +47,17 @@ export const mockVideos: Video[] = [
       avatar: "https://i.pravatar.cc/150?img=3",
       verified: true
     },
-    description: "League of Legends: Intermediate Guide - Level up your skills! #leagueoflegends #gaming #guide",
+    description: "Watch this grilling masterpiece! 🔥🍖 Perfect BBQ vibes #food #grilling #bbq",
     tags: ["food", "grilling", "bbq"],
     likes: 8901,
     comments: 123,
     shares: 45,
     isLiked: false,
-    duration: 45
+    duration: 141
   },
   {
     id: "4",
-    url: "https://www.youtube.com/embed/cWPfh2FjWvc?si=OvIMhEBBlGL8lnXk",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
     thumbnail: "https://images.unsplash.com/photo-1513829596324-4bb2800c5efb?w=800&h=1200&fit=crop",
     user: {
       id: "user4",
@@ -65,17 +65,17 @@ export const mockVideos: Video[] = [
       avatar: "https://i.pravatar.cc/150?img=4",
       verified: false
     },
-    description: "League of Legends: Advanced Guide Part 1 - Master the game! #leagueoflegends #gaming #advanced",
+    description: "Escape to paradise! 🏝️ Beautiful beaches and crystal waters #travel #beach #paradise",
     tags: ["travel", "beach", "paradise"],
     likes: 23456,
     comments: 456,
     shares: 178,
     isLiked: false,
-    duration: 20
+    duration: 135
   },
   {
     id: "5",
-    url: "https://www.youtube.com/embed/3AuiQ6uCF4I?si=mwHv8vu-3tawLxyV",
+    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
     thumbnail: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&h=1200&fit=crop",
     user: {
       id: "user5",
@@ -83,7 +83,7 @@ export const mockVideos: Video[] = [
       avatar: "https://i.pravatar.cc/150?img=5",
       verified: true
     },
-    description: "League of Legends: Advanced Guide Part 2 - Pro strategies! #leagueoflegends #gaming #advanced",
+    description: "Having fun with Chromecast! 📺 Stream everything easily #tech #chromecast #streaming",
     tags: ["tech", "chromecast", "streaming"],
     likes: 67890,
     comments: 901,
