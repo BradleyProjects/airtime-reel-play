@@ -31,76 +31,42 @@ export const VideoPlayer = ({
 }: VideoPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
   const [showHeart, setShowHeart] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true); // Start muted for autoplay
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isBuffering, setIsBuffering] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const [retryCount, setRetryCount] = useState(0);
 
-  // Handle video play with error recovery
+  // Simple play function
   const playVideo = useCallback(async () => {
     if (!videoRef.current) return;
     
     try {
-      // Ensure video is loaded before playing
-      if (videoRef.current.readyState === 0) {
-        videoRef.current.load();
-        // Wait for video to be ready
-        await new Promise((resolve) => {
-          const handleCanPlay = () => {
-            videoRef.current?.removeEventListener('canplay', handleCanPlay);
-            resolve(true);
-          };
-          videoRef.current?.addEventListener('canplay', handleCanPlay);
-          // Timeout after 5 seconds
-          setTimeout(resolve, 5000);
-        });
-      }
-      
+      videoRef.current.muted = true; // Ensure muted for autoplay
       await videoRef.current.play();
       setIsPlaying(true);
       setHasError(false);
-      setRetryCount(0);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Video play error:", error);
-      
-      // Handle different error types
-      if (error.name === 'NotAllowedError') {
-        // User interaction required, mute and retry
-        if (videoRef.current) {
-          videoRef.current.muted = true;
-          setIsMuted(true);
-          try {
-            await videoRef.current.play();
-            setIsPlaying(true);
-            setHasError(false);
-          } catch (retryError) {
-            console.error("Retry with mute failed:", retryError);
-            setHasError(true);
-          }
-        }
-      } else if (error.name === 'NotSupportedError' || error.name === 'AbortError') {
-        // Video format not supported or loading aborted
+      // Try once more with full reload
+      try {
+        videoRef.current.load();
+        videoRef.current.muted = true;
+        await videoRef.current.play();
+        setIsPlaying(true);
+        setHasError(false);
+      } catch (retryError) {
+        console.error("Video retry failed:", retryError);
         setHasError(true);
-        setIsBuffering(false);
       }
     }
   }, []);
 
-  // Clean up on unmount
-  useEffect(() => {
-    return () => {
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
-    };
-  }, []);
+  // Clean up is no longer needed since we removed retryTimeoutRef
 
   // Handle active state changes
   useEffect(() => {
@@ -109,7 +75,6 @@ export const VideoPlayer = ({
     if (isActive) {
       // Reset error state when becoming active
       setHasError(false);
-      setRetryCount(0);
       setIsBuffering(false);
       
       // Start from beginning
@@ -124,11 +89,6 @@ export const VideoPlayer = ({
       videoRef.current.pause();
       setIsPlaying(false);
       setCurrentTime(0);
-      
-      // Clear any pending retry timeouts
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
-      }
     }
   }, [isActive, playVideo]);
 
@@ -150,7 +110,6 @@ export const VideoPlayer = ({
     setCurrentTime(0);
     setDuration(0);
     setHasError(false);
-    setRetryCount(0);
     setIsBuffering(false);
     setIsPlaying(false);
     
@@ -188,13 +147,10 @@ export const VideoPlayer = ({
       const video = e.target as HTMLVideoElement;
       console.error("Video error:", {
         error: video.error,
-        errorCode: video.error?.code,
-        errorMessage: video.error?.message,
-        readyState: video.readyState,
-        networkState: video.networkState,
         src: video.src
       });
       
+      // Simple error handling - just set the error state
       setHasError(true);
       setIsBuffering(false);
       setIsPlaying(false);
@@ -242,7 +198,7 @@ export const VideoPlayer = ({
       videoElement.removeEventListener("play", handlePlay);
       videoElement.removeEventListener("pause", handlePause);
     };
-  }, [isDragging, isActive, playVideo, retryCount]);
+  }, [isDragging, isActive, playVideo]);
 
   const togglePlayPause = () => {
     if (videoRef.current) {
@@ -345,13 +301,12 @@ export const VideoPlayer = ({
       {/* Video */}
       <video
         ref={videoRef}
-        src={video.url}
         className="h-full w-full object-cover cursor-pointer"
         loop
-        muted={isMuted}
+        muted={true}
         playsInline
+        autoPlay={false}
         preload="metadata"
-        crossOrigin="anonymous"
         onClick={togglePlayPause}
         onDoubleClick={handleDoubleClick}
       >
@@ -373,7 +328,6 @@ export const VideoPlayer = ({
           <button
             onClick={() => {
               setHasError(false);
-              setRetryCount(0);
               if (videoRef.current) {
                 videoRef.current.load();
                 playVideo();
