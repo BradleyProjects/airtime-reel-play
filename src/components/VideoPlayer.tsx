@@ -66,8 +66,6 @@ export const VideoPlayer = ({
     }
   }, []);
 
-  // Clean up is no longer needed since we removed retryTimeoutRef
-
   // Handle active state changes
   useEffect(() => {
     if (!videoRef.current) return;
