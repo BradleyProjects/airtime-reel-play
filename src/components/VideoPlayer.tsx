@@ -45,12 +45,22 @@ export const VideoPlayer = ({
 
   // Handle video play with error recovery
   const playVideo = useCallback(async () => {
-    if (!videoRef.current || hasError) return;
+    if (!videoRef.current) return;
     
     try {
-      // Reset video if it's stuck
-      if (videoRef.current.readyState < 2) {
+      // Ensure video is loaded before playing
+      if (videoRef.current.readyState === 0) {
         videoRef.current.load();
+        // Wait for video to be ready
+        await new Promise((resolve) => {
+          const handleCanPlay = () => {
+            videoRef.current?.removeEventListener('canplay', handleCanPlay);
+            resolve(true);
+          };
+          videoRef.current?.addEventListener('canplay', handleCanPlay);
+          // Timeout after 5 seconds
+          setTimeout(resolve, 5000);
+        });
       }
       
       await videoRef.current.play();
@@ -63,27 +73,25 @@ export const VideoPlayer = ({
       // Handle different error types
       if (error.name === 'NotAllowedError') {
         // User interaction required, mute and retry
-        videoRef.current.muted = true;
-        setIsMuted(true);
-        try {
-          await videoRef.current.play();
-          setIsPlaying(true);
-        } catch (retryError) {
-          console.error("Retry with mute failed:", retryError);
+        if (videoRef.current) {
+          videoRef.current.muted = true;
+          setIsMuted(true);
+          try {
+            await videoRef.current.play();
+            setIsPlaying(true);
+            setHasError(false);
+          } catch (retryError) {
+            console.error("Retry with mute failed:", retryError);
+            setHasError(true);
+          }
         }
-      } else if (error.name === 'AbortError') {
-        // Video loading was aborted, retry after delay
-        if (retryCount < 3) {
-          retryTimeoutRef.current = setTimeout(() => {
-            setRetryCount(prev => prev + 1);
-            playVideo();
-          }, 1000);
-        } else {
-          setHasError(true);
-        }
+      } else if (error.name === 'NotSupportedError' || error.name === 'AbortError') {
+        // Video format not supported or loading aborted
+        setHasError(true);
+        setIsBuffering(false);
       }
     }
-  }, [hasError, retryCount]);
+  }, []);
 
   // Clean up on unmount
   useEffect(() => {
@@ -99,13 +107,21 @@ export const VideoPlayer = ({
     if (!videoRef.current) return;
     
     if (isActive) {
-      // Reset playback position for a fresh start
+      // Reset error state when becoming active
+      setHasError(false);
+      setRetryCount(0);
+      setIsBuffering(false);
+      
+      // Start from beginning
       videoRef.current.currentTime = 0;
-      playVideo();
+      
+      // Start playing with a small delay to ensure video is ready
+      setTimeout(() => {
+        playVideo();
+      }, 100);
     } else {
-      // Immediately stop playback and reset when inactive
+      // Immediately stop playback when inactive
       videoRef.current.pause();
-      videoRef.current.currentTime = 0;
       setIsPlaying(false);
       setCurrentTime(0);
       
@@ -169,31 +185,24 @@ export const VideoPlayer = ({
     };
 
     const handleError = (e: Event) => {
-      console.error("Video error:", e);
+      const video = e.target as HTMLVideoElement;
+      console.error("Video error:", {
+        error: video.error,
+        errorCode: video.error?.code,
+        errorMessage: video.error?.message,
+        readyState: video.readyState,
+        networkState: video.networkState,
+        src: video.src
+      });
+      
       setHasError(true);
       setIsBuffering(false);
-      
-      // Try to recover from error
-      if (retryCount < 3) {
-        setTimeout(() => {
-          setRetryCount(prev => prev + 1);
-          videoElement.load();
-          if (isActive) {
-            playVideo();
-          }
-        }, 2000);
-      }
+      setIsPlaying(false);
     };
 
     const handleStalled = () => {
-      console.log("Video stalled, attempting recovery");
+      console.log("Video stalled");
       setIsBuffering(true);
-      // Force reload if stalled for too long
-      setTimeout(() => {
-        if (videoElement.readyState < 3) {
-          videoElement.load();
-        }
-      }, 3000);
     };
 
     const handleEnded = () => {
@@ -341,10 +350,14 @@ export const VideoPlayer = ({
         loop
         muted={isMuted}
         playsInline
-        preload="auto"
+        preload="metadata"
+        crossOrigin="anonymous"
         onClick={togglePlayPause}
         onDoubleClick={handleDoubleClick}
-      />
+      >
+        <source src={video.url} type="video/mp4" />
+        Your browser does not support the video tag.
+      </video>
 
       {/* Loading/Buffering Overlay */}
       {isBuffering && (
